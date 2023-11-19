@@ -4,10 +4,11 @@ go 1.19
 
 require (
 	github.com/gin-gonic/gin v1.9.1
+	github.com/gorilla/websocket v1.5.1
 	github.com/lib/pq v1.10.9
 )
 
-require github.com/golang-jwt/jwt/v5 v5.1.0 // indirect
+require github.com/golang-jwt/jwt/v5 v5.1.0
 
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect
@@ -29,7 +30,7 @@ require (
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.15.0
-	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
