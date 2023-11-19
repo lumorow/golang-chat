@@ -3,8 +3,13 @@ package user
 import (
 	"chat/server/util"
 	"context"
+	"github.com/golang-jwt/jwt/v5"
 	"strconv"
 	"time"
+)
+
+const (
+	secretKey = "secret"
 )
 
 type service struct {
@@ -46,4 +51,41 @@ func (s *service) CreateUser(c context.Context, req *CreateUserReq) (*CreateUser
 	}
 
 	return res, nil
+}
+
+type JWTClaims struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+	jwt.RegisteredClaims
+}
+
+func (s *service) Login(c context.Context, req *LoginUserReq) (*LoginUserRes, error) {
+	ctx, cancel := context.WithTimeout(c, s.timeout)
+	defer cancel()
+
+	u, err := s.Repository.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	err = util.CheckPassword(req.Password, u.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, JWTClaims{
+		ID:       strconv.Itoa(int(u.ID)),
+		Username: u.Username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    strconv.Itoa(int(u.ID)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		},
+	})
+
+	ss, err := token.SignedString([]byte(secretKey))
+	if err != nil {
+		return nil, err
+	}
+
+	return &LoginUserRes{ID: strconv.Itoa(int(u.ID)), Username: u.Username, accessToken: ss}, nil
 }
