@@ -54,7 +54,7 @@ func (h *Handler) JoinRoom(c *gin.Context) {
 	clientID := c.Param("clientId")
 	username := c.Param("username")
 
-	cl := Client{
+	cl := &Client{
 		Conn:     conn,
 		Message:  make(chan *Message, 10),
 		ID:       clientID,
@@ -69,7 +69,9 @@ func (h *Handler) JoinRoom(c *gin.Context) {
 	}
 
 	// Register a new client through the register channel
+	h.hub.Register <- cl
 	// Broadcast that message
+	h.hub.Broadcast <- m
 
 	// writeMessage()
 	// readMessage()
