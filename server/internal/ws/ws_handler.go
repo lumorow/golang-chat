@@ -51,8 +51,8 @@ func (h *Handler) JoinRoom(c *gin.Context) {
 		return
 	}
 	roomID := c.Param("roomId")
-	clientID := c.Param("clientId")
-	username := c.Param("username")
+	clientID := c.Query("userId")
+	username := c.Query("username")
 
 	cl := &Client{
 		Conn:     conn,
@@ -68,11 +68,50 @@ func (h *Handler) JoinRoom(c *gin.Context) {
 		Username: username,
 	}
 
-	// Register a new client through the register channel
 	h.hub.Register <- cl
-	// Broadcast that message
 	h.hub.Broadcast <- m
 
-	// writeMessage()
-	// readMessage()
+	go cl.writeMessage()
+	cl.readMessage(h.hub)
+}
+
+type RoomRes struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+func (h *Handler) GetRooms(c *gin.Context) {
+	rooms := make([]RoomRes, 0, len(h.hub.Rooms))
+	for _, r := range h.hub.Rooms {
+		rooms = append(rooms, RoomRes{
+			ID:   r.ID,
+			Name: r.Name,
+		})
+	}
+
+	c.JSON(http.StatusOK, rooms)
+}
+
+type ClientRes struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
+}
+
+func (h *Handler) GetClients(c *gin.Context) {
+	clients := make([]ClientRes, 0)
+	roomId := c.Param("roomId")
+
+	if _, ok := h.hub.Rooms[roomId]; !ok {
+		c.JSON(http.StatusOK, clients)
+		return
+	}
+
+	for _, cl := range h.hub.Rooms[roomId].Clients {
+		clients = append(clients, ClientRes{
+			ID:       cl.ID,
+			Username: cl.Username,
+		})
+	}
+
+	c.JSON(http.StatusOK, clients)
 }
